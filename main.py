@@ -30,7 +30,6 @@ random.seed(seed_num)
 torch.manual_seed(seed_num)
 np.random.seed(seed_num)
 
-
 def data_initialization(data):
     data.initial_feature_alphabets()
     data.build_alphabet(data.train_dir)
@@ -122,9 +121,9 @@ def recover_nbest_label(pred_variable, mask_variable, label_alphabet, word_recov
         pred_label.append(pred)
     return pred_label
 
-
+iters_per_epoch = 650
 def lr_decay(optimizer, epoch, decay_rate, init_lr):
-    lr = init_lr/(1+decay_rate*epoch)
+    lr = init_lr/(1+decay_rate*epoch*iters_per_epoch)
     print(" Learning rate is set as:", lr)
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
@@ -362,6 +361,8 @@ def train(data):
     else:
         model = SeqLabel(data)
 
+    # model.load_state_dict(torch.load('saved_model/cnncrf.2.model'))
+
     if data.optimizer.lower() == "sgd":
         optimizer = optim.SGD(model.parameters(), lr=data.HP_lr, momentum=data.HP_momentum,weight_decay=data.HP_l2)
     elif data.optimizer.lower() == "adagrad":
@@ -382,7 +383,7 @@ def train(data):
         epoch_start = time.time()
         temp_start = epoch_start
         print("Epoch: %s/%s" %(idx,data.HP_iteration))
-        if data.optimizer == "SGD":
+        if data.optimizer == "d":
             optimizer = lr_decay(optimizer, idx, data.HP_lr_decay, data.HP_lr)
         instance_count = 0
         sample_id = 0
@@ -562,6 +563,9 @@ if __name__ == '__main__':
         data.generate_instance('raw')
         print("nbest: %s"%(data.nbest))
         decode_results, pred_scores = load_model_decode(data, 'raw')
+
+        print('decode results:', len(decode_results))
+        print(decode_results[0])
         if data.nbest and not data.sentence_classification:
             data.write_nbest_decoded_results(decode_results, pred_scores, 'raw')
         else:
