@@ -8,3 +8,5 @@ sent.*
 *.out
 *.log
 /venv
+/saved_model
+/saved_model_finetuned
